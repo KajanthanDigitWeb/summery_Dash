@@ -42,7 +42,7 @@ function App() {
     start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
-  const [isRotating, setIsRotating] = useState(false);
+  const [isRotating, setIsRotating] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [uploadedData, setUploadedData] = useState<SalesData[]>([]);
   const [isUsingUploadedData, setIsUsingUploadedData] = useState(false);
@@ -262,14 +262,56 @@ function App() {
     month: { [selectedAccountName]: groupedSalesData.month[selectedAccountName] || {} },
   };
 
+  // getPeriodDateRanges: returns previous and current period date ranges for display
+  const getPeriodDateRanges = (mode: string) => {
+    const today = new Date();
+    let prevRange = '', currRange = '';
+    const toYMD = (date: Date) => date.toISOString().slice(0, 10);
+    if (mode === 'day') {
+      const currentStart = new Date(today);
+      currentStart.setDate(today.getDate() - 1);
+      const currentEnd = new Date(today);
+      currentEnd.setDate(today.getDate() - 1);
+      const prevStart = new Date(today);
+      prevStart.setDate(today.getDate() - 2);
+      const prevEnd = new Date(today);
+      prevEnd.setDate(today.getDate() - 2);
+      prevRange = `${toYMD(prevStart)} to ${toYMD(prevEnd)}`;
+      currRange = `${toYMD(currentStart)} to ${toYMD(currentEnd)}`;
+    } else if (mode === 'week') {
+      const currentStart = new Date(today);
+      currentStart.setDate(today.getDate() - 7);
+      const currentEnd = new Date(today);
+      currentEnd.setDate(today.getDate() - 1);
+      const prevStart = new Date(today);
+      prevStart.setDate(today.getDate() - 14);
+      const prevEnd = new Date(today);
+      prevEnd.setDate(today.getDate() - 8);
+      prevRange = `${toYMD(prevStart)} to ${toYMD(prevEnd)}`;
+      currRange = `${toYMD(currentStart)} to ${toYMD(currentEnd)}`;
+    } else if (mode === 'month') {
+      const currentStart = new Date(today);
+      currentStart.setDate(today.getDate() - 31);
+      const currentEnd = new Date(today);
+      currentEnd.setDate(today.getDate() - 1);
+      const prevStart = new Date(today);
+      prevStart.setDate(today.getDate() - 61);
+      const prevEnd = new Date(today);
+      prevEnd.setDate(today.getDate() - 32);
+      prevRange = `${toYMD(prevStart)} to ${toYMD(prevEnd)}`;
+      currRange = `${toYMD(currentStart)} to ${toYMD(currentEnd)}`;
+    }
+    return { prevRange, currRange };
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
+    <div className="flex flex-col min-h-screen min-w-0 w-full bg-black text-white overflow-hidden">
       {/* Header */}
-      <header className="bg-red-600 border-b border-red-500 p-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+      <header className="bg-red-600 border-b border-red-500 p-2 lg:p-3 xl:p-4 2xl:p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full">
           <div className="flex items-center space-x-4">
-            <Package className="w-8 h-8" />
-            <h1 className="text-2xl font-bold">eBay Sales Dashboard</h1>
+            <Package className="w-8 h-8 lg:w-12 lg:h-12 2xl:w-16 2xl:h-16" />
+            <h1 className="text-2xl lg:text-4xl 2xl:text-6xl font-bold">eBay Sales Dashboard</h1>
           </div>
           <div className="flex flex-wrap items-center space-x-2 md:space-x-4 gap-y-2">
             <div className="flex items-center space-x-2 bg-black/20 rounded-lg p-2">
@@ -305,7 +347,7 @@ function App() {
             
             <button
               onClick={() => setShowGoogleSheetsModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>Connect Sheets</span>
@@ -313,7 +355,7 @@ function App() {
             
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <Upload className="w-4 h-4" />
               <span>Upload CSV</span>
@@ -324,7 +366,7 @@ function App() {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="bg-gray-900 border-b border-gray-700 p-4">
+        <div className="bg-gray-900 border-b border-gray-700 p-4 lg:p-6 xl:p-8 2xl:p-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <span className="text-sm font-medium">Data Source:</span>
@@ -437,9 +479,9 @@ function App() {
           </div>
         </div>
       )}
-      <div className="flex flex-1 min-h-0 h-screen overflow-hidden">
+      <div className="flex flex-1 min-h-0 h-screen w-screen max-w-none overflow-hidden">
         {/* Sidebar */}
-        <div className="w-full lg:w-80 bg-gray-900 border-r border-gray-700 p-6 flex-shrink-0 flex flex-col h-screen overflow-y-auto">
+        <div className="w-full max-w-xs md:max-w-sm lg:w-64 xl:w-72 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-4 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto">
           {/* Account Rotation */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -530,17 +572,17 @@ function App() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-0 h-screen p-2 sm:p-4 md:p-6 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full">
           {/* Time Period Toggle */}
           <div className="flex items-center justify-between mb-6 w-full flex-shrink-0">
             <div className="flex items-center space-x-4">
-              <h2 className="text-2xl font-bold">Sales Overview</h2>
+              <h2 className="text-2xl lg:text-4xl 2xl:text-5xl font-bold">Sales Overview</h2>
               <div className="flex bg-gray-800 rounded-lg p-1">
                 {['day', 'week', 'month'].map((m) => (
                   <button
                     key={m}
                     onClick={() => handleModeSelect(m as 'day' | 'week' | 'month')}
-                    className={`px-4 py-2 rounded-md transition-colors capitalize ${
+                    className={`px-4 py-2 lg:px-5 lg:py-4 2xl:px-12 2xl:py-5 rounded-md transition-colors capitalize text-base lg:text-2xl 2xl:text-4xl ${
                       m === mode
                         ? 'bg-red-600 text-white'
                         : 'text-gray-400 hover:text-white'
@@ -551,23 +593,21 @@ function App() {
                 ))}
               </div>
             </div>
-
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
-                <Users className="w-4 h-4" />
+              <div className="flex items-center space-x-2 text-sm lg:text-xl 2xl:text-2xl text-gray-400">
+                <Users className="w-4 h-4 lg:w-8 lg:h-8 2xl:w-12 2xl:h-12" />
                 <span>{accounts.length} Accounts</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
-                <Package className="w-4 h-4" />
+              <div className="flex items-center space-x-2 text-sm lg:text-xl 2xl:text-2xl text-gray-400">
+                <Package className="w-4 h-4 lg:w-8 lg:h-8 2xl:w-12 2xl:h-12" />
                 <span>{currentSalesData.length} Total Items</span>
               </div>
             </div>
           </div>
-
           {/* Stats Cards and Chart share vertical space */}
-          <div className="flex-1 flex flex-col gap-4 min-h-0 h-full overflow-hidden">
+          <div className="flex-1 flex flex-col gap-12 min-h-0 h-[700px] overflow-hidden w-full">
             {/* Three Summary Boxes: Previous, Current, Comparison */}
-            <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-4 md:gap-8 items-stretch justify-center flex-shrink-0">
+            <div className="w-full max-w-7xl flex flex-col md:flex-row gap-8 items-center justify-center flex-shrink-0 md:mx-auto">
               {(() => {
                 const icon = mode === 'day' ? <Calendar className="w-5 h-5 text-blue-400" /> : mode === 'week' ? <TrendingUp className="w-5 h-5 text-green-400" /> : <DollarSign className="w-5 h-5 text-red-400" />;
                 const label = mode === 'day' ? 'Daily' : mode === 'week' ? 'Weekly' : 'Monthly';
@@ -580,30 +620,43 @@ function App() {
                 const prev = periods[prevKey] || { amount: 0, quantity: 0 };
                 const salesChange = prev.amount > 0 ? ((current.amount - prev.amount) / prev.amount) * 100 : 0;
                 const quantityChange = prev.quantity > 0 ? ((current.quantity - prev.quantity) / prev.quantity) * 100 : 0;
+                const { prevRange, currRange } = getPeriodDateRanges(mode);
                 return (
-                  <div className="w-full max-w-5xl flex flex-col md:flex-row gap-4 md:gap-8 items-stretch justify-center flex-shrink-0">
+                  <div className="w-full max-w-7xl flex flex-col md:flex-row gap-8 items-center justify-center flex-shrink-0">
                     {/* Previous Period */}
-                    <div className="flex-1 bg-gray-800 rounded-lg p-4 md:p-8 border border-gray-700 flex flex-col items-center justify-center min-w-0 min-h-0">
+                    <div className="flex-1 bg-gray-800 rounded-2xl p-6 md:p-8 border-2 border-gray-700 flex flex-col items-center justify-center min-w-[220px] min-h-[120px] md:min-w-[260px] md:min-h-[160px] xl:min-w-[300px] xl:min-h-[180px] 2xl:min-w-[340px] 2xl:min-h-[200px]">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-gray-400 text-base md:text-lg font-medium">Previous</span>
                         {icon}
                       </div>
                       <div className="text-2xl md:text-4xl font-bold text-white mb-1">${prev.amount.toFixed(2)}</div>
                       <div className="text-lg md:text-2xl text-gray-400">{prev.quantity} items</div>
-                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">{prevKey ? `${label} (${prevKey})` : `No previous ${label.toLowerCase()} data`}</div>
+                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">
+                        {prevKey ? (
+                          mode === 'week' || mode === 'month'
+                            ? `${label} (${prevKey})\n${getPeriodDateRanges(mode).prevRange}`
+                            : `${label} (${prevKey})`
+                        ) : `No previous ${label.toLowerCase()} data`}
+                      </div>
                     </div>
                     {/* Current Period */}
-                    <div className="flex-1 bg-gray-800 rounded-lg p-4 md:p-8 border border-gray-700 flex flex-col items-center justify-center min-w-0 min-h-0">
+                    <div className="flex-1 bg-gray-800 rounded-2xl p-6 md:p-8 border-2 border-gray-700 flex flex-col items-center justify-center min-w-[220px] min-h-[120px] md:min-w-[260px] md:min-h-[160px] xl:min-w-[300px] xl:min-h-[180px] 2xl:min-w-[340px] 2xl:min-h-[200px]">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-gray-400 text-base md:text-lg font-medium">Current</span>
                         {icon}
                       </div>
                       <div className="text-2xl md:text-4xl font-bold text-white mb-1">${current.amount.toFixed(2)}</div>
                       <div className="text-lg md:text-2xl text-gray-400">{current.quantity} items</div>
-                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">{currentKey ? `${label} (${currentKey})` : `No current ${label.toLowerCase()} data`}</div>
+                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">
+                        {currentKey ? (
+                          mode === 'week' || mode === 'month'
+                            ? `${label} (${currentKey})\n${getPeriodDateRanges(mode).currRange}`
+                            : `${label} (${currentKey})`
+                        ) : `No current ${label.toLowerCase()} data`}
+                      </div>
                     </div>
                     {/* Comparison */}
-                    <div className="flex-1 bg-gray-800 rounded-lg p-4 md:p-8 border border-gray-700 flex flex-col items-center justify-center min-w-0 min-h-0">
+                    <div className="flex-1 bg-gray-800 rounded-2xl p-6 md:p-8 border-2 border-gray-700 flex flex-col items-center justify-center min-w-[220px] min-h-[120px] md:min-w-[260px] md:min-h-[160px] xl:min-w-[300px] xl:min-h-[180px] 2xl:min-w-[340px] 2xl:min-h-[200px]">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-gray-400 text-base md:text-lg font-medium">Comparison</span>
                         {icon}
@@ -612,19 +665,27 @@ function App() {
                         <span className={`text-xl md:text-2xl font-bold ${salesChange > 0 ? 'text-green-400' : salesChange < 0 ? 'text-red-400' : 'text-gray-300'}`}>Sales: {salesChange > 0 ? '+' : salesChange < 0 ? '-' : ''}{Math.abs(salesChange).toFixed(1)}%</span>
                         <span className={`text-xl md:text-2xl font-bold ${quantityChange > 0 ? 'text-green-400' : quantityChange < 0 ? 'text-red-400' : 'text-gray-300'}`}>Qty: {quantityChange > 0 ? '+' : quantityChange < 0 ? '-' : ''}{Math.abs(quantityChange).toFixed(1)}%</span>
                       </div>
-                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">vs Previous Period</div>
+                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">
+                        {prevKey && currentKey
+                          ? `Comparing ${label.toLowerCase()} ${prevRange} vs ${currRange}`
+                          : 'vs Previous Period'}
+                      </div>
                     </div>
                   </div>
                 );
               })()}
             </div>
             {/* Trend Chart Below Summary Boxes */}
-            <div className="w-full max-w-5xl mx-auto bg-gray-900 rounded-lg p-4 md:p-8 border border-gray-700 flex-1 min-h-0 h-0">
+            <div className="w-full max-w-8xl mx-auto bg-gray-900 rounded-3xl p-12 border-4 border-gray-700 flex-1 min-h-0 h-0 mt-8 xl:mt-12 2xl:mt-16 min-h-[260px] md:min-h-[320px] xl:min-h-[380px] 2xl:min-h-[420px]">
               {(() => {
                 const periods = filteredGroupedSalesData[mode as 'day' | 'week' | 'month'][selectedAccountName] || {};
                 const periodKeys = Object.keys(periods).sort(); // Ascending for time
+                // Format x-axis labels for 'day' mode to show only yyyy-mm-dd
+                const chartLabels = mode === 'day'
+                  ? periodKeys.map(dateStr => dateStr.slice(0, 10))
+                  : periodKeys;
                 const chartData = {
-                  labels: periodKeys,
+                  labels: chartLabels,
                   datasets: [
                     {
                       label: 'Sales Amount',
@@ -663,7 +724,7 @@ function App() {
                   return <div className="text-center text-gray-400">No data to display for this period.</div>;
                 }
                 return (
-                  <div className="h-64 md:h-80">
+                  <div className="h-48 md:h-64">
                     <Line data={chartData} options={chartOptions} />
                   </div>
                 );
@@ -672,6 +733,10 @@ function App() {
           </div>
         </div>
       </div>
+      {/* Footer */}
+      <footer className="w-full py-4 bg-gray-900 border-t border-gray-700 flex items-center justify-center">
+        <span className="text-gray-200 text-lg md:text-2xl lg:text-3xl font-bold text-center tracking-wide">Digit Web Lanka (PVT) LTD</span>
+      </footer>
     </div>
   );
 }
