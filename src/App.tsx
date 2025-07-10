@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Calendar, DollarSign, Package, Users, Settings, RefreshCw, Upload, FileSpreadsheet, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Calendar, Package, Settings, RefreshCw, Upload, FileSpreadsheet, X } from 'lucide-react';
 import { GoogleSheetsModal } from './components/GoogleSheetsModal';
 import { GoogleSheetsService } from './googleSheetsService';
 import { Line } from 'react-chartjs-2';
@@ -50,6 +50,7 @@ function App() {
   const [dragActive, setDragActive] = useState(false);
   const [showGoogleSheetsModal, setShowGoogleSheetsModal] = useState(false);
   const [googleSheetsData, setGoogleSheetsData] = useState<SalesData[]>([]);
+  const [lastYearGoogleSheetsData, setLastYearGoogleSheetsData] = useState<SalesData[]>([]);
   const [isUsingGoogleSheets, setIsUsingGoogleSheets] = useState(false);
   const [googleSheetsStatus, setGoogleSheetsStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
 
@@ -126,6 +127,23 @@ function App() {
     }
   };
 
+  // Fetch last year data from Sheet2
+  const fetchLastYearSheet = async () => {
+    try {
+      const config = {
+        spreadsheetId: '1331ogfREfU_aunmaQ17GxQ0QrLD7JoENPrU9pxQa4VY',
+        range: 'Sheet2!A:Z',
+        apiKey: 'AIzaSyAkkwg845uAn23apY-yB7i0VP-bSM6EyIs'
+      };
+      const sheetsService = new GoogleSheetsService(config);
+      const rawData = await sheetsService.fetchData();
+      const salesData = GoogleSheetsService.parseToSalesData(rawData);
+      setLastYearGoogleSheetsData(salesData);
+    } catch (error) {
+      console.error('Failed to fetch last year sheet:', error);
+    }
+  };
+
   // Load saved Google Sheets config on component mount
   useEffect(() => {
     // Auto-configure with your spreadsheet ID and API key
@@ -156,6 +174,13 @@ function App() {
     }
   }, []);
 
+  // Fetch last year data on mount if using Google Sheets
+  useEffect(() => {
+    if (isUsingGoogleSheets) {
+      fetchLastYearSheet();
+    }
+  }, [isUsingGoogleSheets]);
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -181,10 +206,25 @@ function App() {
 
   // Calculate account summaries
   const accountSummaries = (): AccountSummary[] => {
-    // Always use accountName for grouping, fallback to 'Unknown Account'
-    const accounts = [...new Set(currentSalesData.map(item => item.accountName || 'Unknown Account'))];
+    // Always use accountName for grouping, fallback to 'Other accounts'
+    const accounts = [...new Set(currentSalesData.map(item => item.accountName || 'Other accounts'))];
+    // Custom sort order: LEDSone, Electricalsone, Sunsone, Other accounts
+    const order = [
+      'LEDSone eBay(Renuha)',
+      'Electricalsone eBay(Jubista)',
+      'Sunsone eBay(Renuha)',
+      'Other accounts'
+    ];
+    accounts.sort((a, b) => {
+      const aIdx = order.indexOf(a);
+      const bIdx = order.indexOf(b);
+      if (aIdx === -1 && bIdx === -1) return a.localeCompare(b);
+      if (aIdx === -1) return 1;
+      if (bIdx === -1) return -1;
+      return aIdx - bIdx;
+    });
     return accounts.map(accountName => {
-      const accountData = currentSalesData.filter(item => (item.accountName || 'Unknown Account') === accountName);
+      const accountData = currentSalesData.filter(item => (item.accountName || 'Other accounts') === accountName);
       const accountId = accountData[0]?.accountId || '';
       const currentPeriodData = accountData.filter(item => {
         const itemDate = new Date(item.date);
@@ -262,7 +302,15 @@ function App() {
     month: { [selectedAccountName]: groupedSalesData.month[selectedAccountName] || {} },
   };
 
-  // getPeriodDateRanges: returns previous and current period date ranges for display
+  // Helper: get all unique dates from the data (using 'order_date' if present in raw data, else 'date')
+  const getAllOrderDates = () => {
+    // Try to get 'order_date' if it exists, else fallback to 'date'
+    return Array.from(new Set(currentSalesData.map(item => {
+      // @ts-ignore
+      return (item.order_date || item.date || '').slice(0, 10);
+    }).filter(Boolean))).sort();
+  };
+
   const getPeriodDateRanges = (mode: string) => {
     const today = new Date();
     let prevRange = '', currRange = '';
@@ -272,10 +320,10 @@ function App() {
       currentStart.setDate(today.getDate() - 1);
       const currentEnd = new Date(today);
       currentEnd.setDate(today.getDate() - 1);
-      const prevStart = new Date(today);
-      prevStart.setDate(today.getDate() - 2);
-      const prevEnd = new Date(today);
-      prevEnd.setDate(today.getDate() - 2);
+      const prevStart = new Date(currentStart);
+      prevStart.setFullYear(currentStart.getFullYear() - 1);
+      const prevEnd = new Date(currentEnd);
+      prevEnd.setFullYear(currentEnd.getFullYear() - 1);
       prevRange = `${toYMD(prevStart)} to ${toYMD(prevEnd)}`;
       currRange = `${toYMD(currentStart)} to ${toYMD(currentEnd)}`;
     } else if (mode === 'week') {
@@ -283,10 +331,10 @@ function App() {
       currentStart.setDate(today.getDate() - 7);
       const currentEnd = new Date(today);
       currentEnd.setDate(today.getDate() - 1);
-      const prevStart = new Date(today);
-      prevStart.setDate(today.getDate() - 14);
-      const prevEnd = new Date(today);
-      prevEnd.setDate(today.getDate() - 8);
+      const prevStart = new Date(currentStart);
+      prevStart.setFullYear(currentStart.getFullYear() - 1);
+      const prevEnd = new Date(currentEnd);
+      prevEnd.setFullYear(currentEnd.getFullYear() - 1);
       prevRange = `${toYMD(prevStart)} to ${toYMD(prevEnd)}`;
       currRange = `${toYMD(currentStart)} to ${toYMD(currentEnd)}`;
     } else if (mode === 'month') {
@@ -294,15 +342,110 @@ function App() {
       currentStart.setDate(today.getDate() - 31);
       const currentEnd = new Date(today);
       currentEnd.setDate(today.getDate() - 1);
-      const prevStart = new Date(today);
-      prevStart.setDate(today.getDate() - 61);
-      const prevEnd = new Date(today);
-      prevEnd.setDate(today.getDate() - 32);
+      const prevStart = new Date(currentStart);
+      prevStart.setFullYear(currentStart.getFullYear() - 1);
+      const prevEnd = new Date(currentEnd);
+      prevEnd.setFullYear(currentEnd.getFullYear() - 1);
       prevRange = `${toYMD(prevStart)} to ${toYMD(prevEnd)}`;
       currRange = `${toYMD(currentStart)} to ${toYMD(currentEnd)}`;
     }
     return { prevRange, currRange };
   };
+
+  // --- Helper: Get last year period for day/week/month ---
+  function getLastYearPeriod(mode: string) {
+    // Use the current period range, but set year to -1 for both start and end
+    const { currRange } = getPeriodDateRanges(mode);
+    const [currStart, currEnd] = currRange.split(' to ');
+    const start = new Date(currStart);
+    const end = new Date(currEnd);
+    start.setFullYear(start.getFullYear() - 1);
+    end.setFullYear(end.getFullYear() - 1);
+    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  }
+
+  // --- Calculate current and last year period totals for summary boxes ---
+  function getPeriodTotals(accountName: string, mode: string) {
+    // Use the new date ranges for current and last year
+    const { currRange, prevRange } = getPeriodDateRanges(mode);
+    const [currStart, currEnd] = currRange.split(' to ');
+    const [prevStart, prevEnd] = prevRange.split(' to ');
+
+    // Current period totals
+    const currentData = (googleSheetsData.length > 0 ? googleSheetsData : mockSalesData).filter(
+      d => d.accountName === accountName && d.date >= currStart && d.date <= currEnd
+    );
+    const currentAmount = currentData.reduce((sum, d) => sum + d.amount, 0);
+    const currentQuantity = currentData.reduce((sum, d) => sum + d.quantity, 0);
+
+    // Last year period totals (same month/day, year-1)
+    const lastYearData = lastYearGoogleSheetsData.filter(
+      d => d.accountName === accountName && d.date >= prevStart && d.date <= prevEnd
+    );
+    const lastYearAmount = lastYearData.reduce((sum, d) => sum + d.amount, 0);
+    const lastYearQuantity = lastYearData.reduce((sum, d) => sum + d.quantity, 0);
+
+    // YoY change
+    const amountYoY = lastYearAmount > 0 ? ((currentAmount - lastYearAmount) / lastYearAmount) * 100 : 0;
+    const quantityYoY = lastYearQuantity > 0 ? ((currentQuantity - lastYearQuantity) / lastYearQuantity) * 100 : 0;
+
+    return {
+      currentAmount,
+      currentQuantity,
+      lastYearAmount,
+      lastYearQuantity,
+      amountYoY,
+      quantityYoY,
+      lastYearPeriod: { start: prevStart, end: prevEnd }
+    };
+  }
+
+  // --- Helper: Get last 60 days totals for current and last year for sidebar ---
+  function getSidebar60DayTotals(accountName: string) {
+    // Use currentSalesData for current year, lastYearGoogleSheetsData for last year
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Current year: last 60 days
+    const currStart = new Date(today);
+    currStart.setDate(today.getDate() - 59); // include today
+    const currEnd = today;
+    const currStartStr = currStart.toISOString().slice(0, 10);
+    const currEndStr = currEnd.toISOString().slice(0, 10);
+
+    // Last year: same period, but year - 1
+    const lastStart = new Date(currStart);
+    lastStart.setFullYear(currStart.getFullYear() - 1);
+    const lastEnd = new Date(currEnd);
+    lastEnd.setFullYear(currEnd.getFullYear() - 1);
+    const lastStartStr = lastStart.toISOString().slice(0, 10);
+    const lastEndStr = lastEnd.toISOString().slice(0, 10);
+
+    // Current year data
+    const currData = currentSalesData.filter(
+      d => d.accountName === accountName && d.date >= currStartStr && d.date <= currEndStr
+    );
+    // Last year data
+    const lastData = lastYearGoogleSheetsData.filter(
+      d => d.accountName === accountName && d.date >= lastStartStr && d.date <= lastEndStr
+    );
+
+    const currAmount = currData.reduce((sum, d) => sum + d.amount, 0);
+    const currQuantity = currData.reduce((sum, d) => sum + d.quantity, 0);
+    const lastAmount = lastData.reduce((sum, d) => sum + d.amount, 0);
+    const lastQuantity = lastData.reduce((sum, d) => sum + d.quantity, 0);
+
+    return {
+      currAmount,
+      currQuantity,
+      lastAmount,
+      lastQuantity,
+      currStartStr,
+      currEndStr,
+      lastStartStr,
+      lastEndStr
+    };
+  }
 
   return (
     <div className="flex flex-col min-h-screen min-w-0 w-full bg-black text-white overflow-hidden">
@@ -511,31 +654,29 @@ function App() {
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                 <h3 className="font-semibold text-white mb-2">{currentAccount.accountName}</h3>
                 <p className="text-sm text-gray-400 mb-4">ID: {currentAccount.accountId}</p>
-                
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-400">Total Amount</p>
-                    <p className="text-xl font-bold text-white">${currentAccount.totalAmount.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Total Quantity</p>
-                    <p className="text-xl font-bold text-white">{currentAccount.totalQuantity}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {currentAccount.salesChange >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-green-400" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-red-400" />
-                    )}
-                    <span className={`text-sm font-medium ${currentAccount.salesChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {currentAccount.salesChange >= 0 ? '+' : ''}{currentAccount.salesChange.toFixed(1)}%
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-400">{currentAccount.itemCount} items</span>
-                </div>
+                {/* --- Sidebar: Last 60 days current and last year totals --- */}
+                {(() => {
+                  const totals = getSidebar60DayTotals(currentAccount.accountName);
+                  return (
+                    <div className="mb-4 grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Current Year)</p>
+                        <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.currAmount.toFixed(2)}</p>
+                        <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.currQuantity}</p>
+                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.currStartStr} to {totals.currEndStr}</p>
+                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.currStartStr} - {totals.currEndStr}</span></p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Last Year)</p>
+                        <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.lastAmount.toFixed(2)}</p>
+                        <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.lastQuantity}</p>
+                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.lastStartStr} to {totals.lastEndStr}</p>
+                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.lastStartStr} - {totals.lastEndStr}</span></p>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* --- End sidebar custom totals --- */}
               </div>
             )}
           </div>
@@ -554,17 +695,7 @@ function App() {
                       : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
                   }`}
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{account.accountName}</span>
-                    <span className={`text-sm ${
-                      account.salesChange >= 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {account.salesChange >= 0 ? '+' : ''}{account.salesChange.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    ${account.totalAmount.toFixed(2)} • {account.totalQuantity} items
-                  </div>
+                  <span className="font-medium">{account.accountName}</span>
                 </button>
               ))}
             </div>
@@ -573,163 +704,134 @@ function App() {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full">
-          {/* Time Period Toggle */}
-          <div className="flex items-center justify-between mb-6 w-full flex-shrink-0">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-2xl lg:text-4xl 2xl:text-5xl font-bold">Sales Overview</h2>
-              <div className="flex bg-gray-800 rounded-lg p-1">
-                {['day', 'week', 'month'].map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => handleModeSelect(m as 'day' | 'week' | 'month')}
-                    className={`px-4 py-2 lg:px-5 lg:py-4 2xl:px-12 2xl:py-5 rounded-md transition-colors capitalize text-base lg:text-2xl 2xl:text-4xl ${
-                      m === mode
-                        ? 'bg-red-600 text-white'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm lg:text-xl 2xl:text-2xl text-gray-400">
-                <Users className="w-4 h-4 lg:w-8 lg:h-8 2xl:w-12 2xl:h-12" />
-                <span>{accounts.length} Accounts</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm lg:text-xl 2xl:text-2xl text-gray-400">
-                <Package className="w-4 h-4 lg:w-8 lg:h-8 2xl:w-12 2xl:h-12" />
-                <span>{currentSalesData.length} Total Items</span>
-              </div>
+          {/* Account name and mode switcher at the top */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 w-full">
+            <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount.accountName}</h2>
+            <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
+              {['day', 'week', 'month'].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => handleModeSelect(m as 'day' | 'week' | 'month')}
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-lg font-semibold text-xs sm:text-sm md:text-base lg:text-lg transition-colors ${mode === m ? 'bg-red-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}`}
+                >
+                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                </button>
+              ))}
             </div>
           </div>
-          {/* Stats Cards and Chart share vertical space */}
-          <div className="flex-1 flex flex-col gap-12 min-h-0 h-[700px] overflow-hidden w-full">
-            {/* Three Summary Boxes: Previous, Current, Comparison */}
-            <div className="w-full max-w-7xl flex flex-col md:flex-row gap-8 items-center justify-center flex-shrink-0 md:mx-auto">
+          {/* Summary Boxes */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{ minHeight: '220px', height: '22vh' }}>
+            {/* Last Year Period */}
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
               {(() => {
-                const icon = mode === 'day' ? <Calendar className="w-5 h-5 text-blue-400" /> : mode === 'week' ? <TrendingUp className="w-5 h-5 text-green-400" /> : <DollarSign className="w-5 h-5 text-red-400" />;
-                const label = mode === 'day' ? 'Daily' : mode === 'week' ? 'Weekly' : 'Monthly';
-                const periods = filteredGroupedSalesData[mode as 'day' | 'week' | 'month'][selectedAccountName] || {};
-                // Sort period keys (dates/periods) descending
-                const periodKeys = Object.keys(periods).sort((a, b) => b.localeCompare(a));
-                const currentKey = periodKeys[0];
-                const prevKey = periodKeys[1];
-                const current = periods[currentKey] || { amount: 0, quantity: 0 };
-                const prev = periods[prevKey] || { amount: 0, quantity: 0 };
-                const salesChange = prev.amount > 0 ? ((current.amount - prev.amount) / prev.amount) * 100 : 0;
-                const quantityChange = prev.quantity > 0 ? ((current.quantity - prev.quantity) / prev.quantity) * 100 : 0;
-                const { prevRange, currRange } = getPeriodDateRanges(mode);
+                const totals = getPeriodTotals(selectedAccountName, mode);
+                const { prevRange } = getPeriodDateRanges(mode);
                 return (
-                  <div className="w-full max-w-7xl flex flex-col md:flex-row gap-8 items-center justify-center flex-shrink-0">
-                    {/* Previous Period */}
-                    <div className="flex-1 bg-gray-800 rounded-2xl p-6 md:p-8 border-2 border-gray-700 flex flex-col items-center justify-center min-w-[220px] min-h-[120px] md:min-w-[260px] md:min-h-[160px] xl:min-w-[300px] xl:min-h-[180px] 2xl:min-w-[340px] 2xl:min-h-[200px]">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-gray-400 text-base md:text-lg font-medium">Previous</span>
-                        {icon}
-                      </div>
-                      <div className="text-2xl md:text-4xl font-bold text-white mb-1">${prev.amount.toFixed(2)}</div>
-                      <div className="text-lg md:text-2xl text-gray-400">{prev.quantity} items</div>
-                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">
-                        {prevKey ? (
-                          mode === 'week' || mode === 'month'
-                            ? `${label} (${prevKey})\n${getPeriodDateRanges(mode).prevRange}`
-                            : `${label} (${prevKey})`
-                        ) : `No previous ${label.toLowerCase()} data`}
-                      </div>
-                    </div>
-                    {/* Current Period */}
-                    <div className="flex-1 bg-gray-800 rounded-2xl p-6 md:p-8 border-2 border-gray-700 flex flex-col items-center justify-center min-w-[220px] min-h-[120px] md:min-w-[260px] md:min-h-[160px] xl:min-w-[300px] xl:min-h-[180px] 2xl:min-w-[340px] 2xl:min-h-[200px]">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-gray-400 text-base md:text-lg font-medium">Current</span>
-                        {icon}
-                      </div>
-                      <div className="text-2xl md:text-4xl font-bold text-white mb-1">${current.amount.toFixed(2)}</div>
-                      <div className="text-lg md:text-2xl text-gray-400">{current.quantity} items</div>
-                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">
-                        {currentKey ? (
-                          mode === 'week' || mode === 'month'
-                            ? `${label} (${currentKey})\n${getPeriodDateRanges(mode).currRange}`
-                            : `${label} (${currentKey})`
-                        ) : `No current ${label.toLowerCase()} data`}
-                      </div>
-                    </div>
-                    {/* Comparison */}
-                    <div className="flex-1 bg-gray-800 rounded-2xl p-6 md:p-8 border-2 border-gray-700 flex flex-col items-center justify-center min-w-[220px] min-h-[120px] md:min-w-[260px] md:min-h-[160px] xl:min-w-[300px] xl:min-h-[180px] 2xl:min-w-[340px] 2xl:min-h-[200px]">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-gray-400 text-base md:text-lg font-medium">Comparison</span>
-                        {icon}
-                      </div>
-                      <div className="flex flex-col gap-2 w-full items-center">
-                        <span className={`text-xl md:text-2xl font-bold ${salesChange > 0 ? 'text-green-400' : salesChange < 0 ? 'text-red-400' : 'text-gray-300'}`}>Sales: {salesChange > 0 ? '+' : salesChange < 0 ? '-' : ''}{Math.abs(salesChange).toFixed(1)}%</span>
-                        <span className={`text-xl md:text-2xl font-bold ${quantityChange > 0 ? 'text-green-400' : quantityChange < 0 ? 'text-red-400' : 'text-gray-300'}`}>Qty: {quantityChange > 0 ? '+' : quantityChange < 0 ? '-' : ''}{Math.abs(quantityChange).toFixed(1)}%</span>
-                      </div>
-                      <div className="text-xs md:text-sm text-gray-500 mt-2 text-center">
-                        {prevKey && currentKey
-                          ? `Comparing ${label.toLowerCase()} ${prevRange} vs ${currRange}`
-                          : 'vs Previous Period'}
-                      </div>
-                    </div>
-                  </div>
+                  <>
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">Last Year</p>
+                    <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white"><span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">£ {totals.lastYearAmount.toFixed(2)}</span></p>
+                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mt-2">Qty: <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl">{totals.lastYearQuantity}</span></p>
+                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Range: <span className="text-gray-300">{prevRange}</span></p>
+                  </>
                 );
               })()}
             </div>
-            {/* Trend Chart Below Summary Boxes */}
-            <div className="w-full max-w-8xl mx-auto bg-gray-900 rounded-3xl p-12 border-4 border-gray-700 flex-1 min-h-0 h-0 mt-8 xl:mt-12 2xl:mt-16 min-h-[260px] md:min-h-[320px] xl:min-h-[380px] 2xl:min-h-[420px]">
+            {/* Current Year Period */}
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
               {(() => {
-                const periods = filteredGroupedSalesData[mode as 'day' | 'week' | 'month'][selectedAccountName] || {};
-                const periodKeys = Object.keys(periods).sort(); // Ascending for time
-                // Format x-axis labels for 'day' mode to show only yyyy-mm-dd
-                const chartLabels = mode === 'day'
-                  ? periodKeys.map(dateStr => dateStr.slice(0, 10))
-                  : periodKeys;
-                const chartData = {
-                  labels: chartLabels,
-                  datasets: [
-                    {
-                      label: 'Sales Amount',
-                      data: periodKeys.map(k => periods[k]?.amount || 0),
-                      borderColor: '#ef4444',
-                      backgroundColor: 'rgba(239,68,68,0.2)',
-                      tension: 0.3,
-                      fill: true,
-                    },
-                    {
-                      label: 'Quantity',
-                      data: periodKeys.map(k => periods[k]?.quantity || 0),
-                      borderColor: '#3b82f6',
-                      backgroundColor: 'rgba(59,130,246,0.1)',
-                      tension: 0.3,
-                      fill: false,
-                      yAxisID: 'y1',
-                    },
-                  ],
-                };
-                const chartOptions = {
-                  responsive: true,
-                  plugins: {
-                    legend: { display: true, labels: { color: '#fff' } },
-                    title: { display: false },
-                    tooltip: { mode: 'index' as const, intersect: false },
-                  },
-                  scales: {
-                    x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
-                    y: { ticks: { color: '#ef4444' }, grid: { color: '#333' }, title: { display: true, text: 'Sales ($)', color: '#ef4444' } },
-                    y1: { position: 'right' as const, ticks: { color: '#3b82f6' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Quantity', color: '#3b82f6' } },
-                  },
-                  maintainAspectRatio: false,
-                };
-                if (periodKeys.length === 0) {
-                  return <div className="text-center text-gray-400">No data to display for this period.</div>;
-                }
+                const totals = getPeriodTotals(selectedAccountName, mode);
+                const { currRange } = getPeriodDateRanges(mode);
                 return (
-                  <div className="h-48 md:h-64">
-                    <Line data={chartData} options={chartOptions} />
-                  </div>
+                  <>
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">Current Year</p>
+                    <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white">£ {totals.currentAmount.toFixed(2)}</p>
+                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mt-2">Qty: <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl">{totals.currentQuantity}</span></p>
+                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Range: <span className="text-gray-300">{currRange}</span></p>
+                  </>
                 );
               })()}
             </div>
+            {/* Comparison (YoY) */}
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
+              {(() => {
+                const totals = getPeriodTotals(selectedAccountName, mode);
+                const { currRange, prevRange } = getPeriodDateRanges(mode);
+                return (
+                  <>
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">YoY Comparison</p>
+                    <div className="flex items-center space-x-2 mb-2">
+                      {totals.amountYoY >= 0 ? (
+                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-green-400" />
+                      ) : (
+                        <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-red-400" />
+                      )}
+                      <span className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold ${totals.amountYoY >= 0 ? 'text-green-400' : 'text-red-400'}`}>Amount: {totals.amountYoY >= 0 ? '+' : ''}{totals.amountYoY.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {totals.quantityYoY >= 0 ? (
+                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-green-400" />
+                      ) : (
+                        <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-red-400" />
+                      )}
+                      <span className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold ${totals.quantityYoY >= 0 ? 'text-green-400' : 'text-red-400'}`}>Qty: {totals.quantityYoY >= 0 ? '+' : ''}{totals.quantityYoY.toFixed(1)}%</span>
+                    </div>
+                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Current Year: <span className="text-gray-300">{currRange}</span></p>
+                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400">Last Year: <span className="text-gray-300">{prevRange}</span></p>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Trend Chart */}
+          <div className="flex-1 min-h-0" style={{ minHeight: '350px', height: 'calc(60vh - 64px)' }}>
+            <Line
+              data={{
+                labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
+                datasets: [
+                  {
+                    label: 'Amount',
+                    data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.amount),
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.2)',
+                    tension: 0.4,
+                  },
+                  {
+                    label: 'Quantity',
+                    data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.quantity),
+                    borderColor: '#22d3ee',
+                    backgroundColor: 'rgba(34,211,238,0.2)',
+                    tension: 0.4,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    labels: { color: '#fff', font: { size: 16 } },
+                  },
+                  title: {
+                    display: true,
+                    text: `${selectedAccountName} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} Trend`,
+                    color: '#fff',
+                    font: { size: 22, weight: 'bold' },
+                  },
+                },
+                scales: {
+                  x: {
+                    ticks: { color: '#fff', font: { size: 14 } },
+                    grid: { color: '#374151' },
+                  },
+                  y: {
+                    ticks: { color: '#fff', font: { size: 14 } },
+                    grid: { color: '#374151' },
+                  },
+                },
+                maintainAspectRatio: false,
+              }}
+              height={320}
+            />
           </div>
         </div>
       </div>

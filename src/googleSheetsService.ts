@@ -58,7 +58,7 @@ export class GoogleSheetsService {
     return sheetData.map((row, index) => {
       const itemId = row.itemId || row.itemid || row.sku || '';
       // Determine account name by itemId prefix
-      let accountName = 'Unknown Account';
+      let accountName = 'Other accounts';
       if (itemId.startsWith('16')) {
         accountName = 'LEDSone eBay(Renuha)';
       } else if (itemId.startsWith('26')) {
@@ -83,7 +83,8 @@ export class GoogleSheetsService {
     // Group by accountName and period (day/week/month)
     const grouped: Record<string, Record<string, { amount: number; quantity: number; count: number }>> = {};
     salesData.forEach(item => {
-      const accountName = item.accountName || 'Unknown Account';
+      // Always use 'Other accounts' for unknown/empty accountName
+      const accountName = item.accountName && item.accountName !== 'Unknown Account' ? item.accountName : 'Other accounts';
       let periodKey = '';
       const date = new Date(item.date);
       if (isNaN(date.getTime())) return; // skip invalid dates
