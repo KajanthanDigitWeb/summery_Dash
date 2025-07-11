@@ -450,27 +450,27 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen min-w-0 w-full bg-black text-white overflow-hidden">
       {/* Header */}
-      <header className="bg-red-600 border-b border-red-500 p-2 lg:p-3 xl:p-4 2xl:p-6">
+      <header className="bg-red-600 border-b border-red-500 p-4 md:p-6 lg:p-8 xl:p-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full">
           <div className="flex items-center space-x-4">
-            <Package className="w-8 h-6 lg:w-12 lg:h-12 2xl:w-16 2xl:h-14" />
-            <h1 className="text-2xl lg:text-4xl 2xl:text-5xl font-bold">eBay Sales Dashboard</h1>
+            <Package className="w-12 h-12 lg:w-16 lg:h-16 2xl:w-20 2xl:h-20" />
+            <h1 className="text-3xl lg:text-5xl 2xl:text-7xl font-bold">eBay Sales Dashboard</h1>
           </div>
           <div className="flex flex-wrap items-center space-x-2 md:space-x-4 gap-y-2">
-            <div className="flex items-center space-x-2 bg-black/20 rounded-lg p-2">
-              <Calendar className="w-4 h-4" />
+            <div className="flex items-center space-x-2 bg-black/20 rounded-lg p-3">
+              <Calendar className="w-5 h-5" />
               <input
                 type="date"
                 value={selectedDateRange.start}
                 onChange={(e) => setSelectedDateRange(prev => ({ ...prev, start: e.target.value }))}
-                className="bg-transparent text-white text-sm"
+                className="bg-transparent text-white text-base"
               />
               <span>to</span>
               <input
                 type="date"
                 value={selectedDateRange.end}
                 onChange={(e) => setSelectedDateRange(prev => ({ ...prev, end: e.target.value }))}
-                className="bg-transparent text-white text-sm"
+                className="bg-transparent text-white text-base"
               />
             </div>
             
@@ -645,7 +645,7 @@ function App() {
                   disabled={rotationIndex === totalRotations - 1}
                   className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-2.5 h-2.5" />
                 </button>
               </div>
             </div>
@@ -720,7 +720,7 @@ function App() {
             </div>
           </div>
           {/* Summary Boxes */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{ minHeight: '220px', height: '22vh' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{ minHeight: '170px', height: '20vh' }}>
             {/* Last Year Period */}
             <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
               {(() => {
@@ -784,7 +784,7 @@ function App() {
           </div>
 
           {/* Trend Chart */}
-          <div className="flex-1 min-h-0" style={{ minHeight: '350px', height: 'calc(60vh - 64px)' }}>
+          <div className="flex-1 min-h-0" style={{ minHeight: '300px', minWidth: '100%', height: 'calc(56vh - 6px)', width: '100%' }}>
             <Line
               data={{
                 labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
@@ -809,13 +809,13 @@ function App() {
                 responsive: true,
                 plugins: {
                   legend: {
-                    labels: { color: '#fff', font: { size: 16 } },
+                    labels: { color: '#fff', font: { size: 14 } },
                   },
                   title: {
                     display: true,
                     text: `${selectedAccountName} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} Trend`,
                     color: '#fff',
-                    font: { size: 22, weight: 'bold' },
+                    font: { size: 2, weight: 'bold' },
                   },
                 },
                 scales: {
