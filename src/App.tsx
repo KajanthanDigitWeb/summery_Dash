@@ -303,13 +303,6 @@ function App() {
   };
 
   // Helper: get all unique dates from the data (using 'order_date' if present in raw data, else 'date')
-  const getAllOrderDates = () => {
-    // Try to get 'order_date' if it exists, else fallback to 'date'
-    return Array.from(new Set(currentSalesData.map(item => {
-      // @ts-ignore
-      return (item.order_date || item.date || '').slice(0, 10);
-    }).filter(Boolean))).sort();
-  };
 
   const getPeriodDateRanges = (mode: string) => {
     const today = new Date();
@@ -353,16 +346,6 @@ function App() {
   };
 
   // --- Helper: Get last year period for day/week/month ---
-  function getLastYearPeriod(mode: string) {
-    // Use the current period range, but set year to -1 for both start and end
-    const { currRange } = getPeriodDateRanges(mode);
-    const [currStart, currEnd] = currRange.split(' to ');
-    const start = new Date(currStart);
-    const end = new Date(currEnd);
-    start.setFullYear(start.getFullYear() - 1);
-    end.setFullYear(end.getFullYear() - 1);
-    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
-  }
 
   // --- Calculate current and last year period totals for summary boxes ---
   function getPeriodTotals(accountName: string, mode: string) {
