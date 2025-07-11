@@ -453,8 +453,8 @@ function App() {
       <header className="bg-red-600 border-b border-red-500 p-2 lg:p-3 xl:p-4 2xl:p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full">
           <div className="flex items-center space-x-4">
-            <Package className="w-8 h-8 lg:w-12 lg:h-12 2xl:w-16 2xl:h-16" />
-            <h1 className="text-2xl lg:text-4xl 2xl:text-6xl font-bold">eBay Sales Dashboard</h1>
+            <Package className="w-8 h-6 lg:w-12 lg:h-12 2xl:w-16 2xl:h-14" />
+            <h1 className="text-2xl lg:text-4xl 2xl:text-5xl font-bold">eBay Sales Dashboard</h1>
           </div>
           <div className="flex flex-wrap items-center space-x-2 md:space-x-4 gap-y-2">
             <div className="flex items-center space-x-2 bg-black/20 rounded-lg p-2">
