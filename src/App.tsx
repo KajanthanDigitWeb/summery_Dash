@@ -448,9 +448,9 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen min-w-0 w-full bg-black text-white overflow-hidden">
+    <div className="flex flex-col min-h-screen w-screen min-w-0 w-full bg-black text-white overflow-hidden">
       {/* Header */}
-      <header className="bg-red-600 border-b border-red-500 p-4 md:p-6 lg:p-8 xl:p-10">
+      <header className="bg-red-600 border-b border-red-500 p-2 md:p-4 lg:p-6 xl:p-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full">
           <div className="flex items-center space-x-4">
             <Package className="w-12 h-12 lg:w-16 lg:h-16 2xl:w-20 2xl:h-20" />
