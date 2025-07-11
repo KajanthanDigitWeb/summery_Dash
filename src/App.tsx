@@ -448,398 +448,421 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen w-screen min-w-0 w-full bg-black text-white overflow-hidden">
-      {/* Header */}
-      <header className="bg-red-600 border-b border-red-500 p-2 md:p-4 lg:p-6 xl:p-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full">
-          <div className="flex items-center space-x-4">
-            <Package className="w-12 h-12 lg:w-16 lg:h-16 2xl:w-20 2xl:h-20" />
-            <h1 className="text-3xl lg:text-5xl 2xl:text-7xl font-bold">eBay Sales Dashboard</h1>
-          </div>
-          <div className="flex flex-wrap items-center space-x-2 md:space-x-4 gap-y-2">
-            <div className="flex items-center space-x-2 bg-black/20 rounded-lg p-3">
-              <Calendar className="w-5 h-5" />
-              <input
-                type="date"
-                value={selectedDateRange.start}
-                onChange={(e) => setSelectedDateRange(prev => ({ ...prev, start: e.target.value }))}
-                className="bg-transparent text-white text-base"
-              />
-              <span>to</span>
-              <input
-                type="date"
-                value={selectedDateRange.end}
-                onChange={(e) => setSelectedDateRange(prev => ({ ...prev, end: e.target.value }))}
-                className="bg-transparent text-white text-base"
-              />
-            </div>
-            
-            <button
-              onClick={() => setIsRotating(!isRotating)}
-              className={`p-2 rounded-lg transition-colors ${isRotating ? 'bg-white text-red-600' : 'bg-black/20 hover:bg-black/30'}`}
-            >
-              <RefreshCw className={`w-5 h-5 ${isRotating ? 'animate-spin' : ''}`} />
-            </button>
-            
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 rounded-lg bg-black/20 hover:bg-black/30 transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            
-            <button
-              onClick={() => setShowGoogleSheetsModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Connect Sheets</span>
-            </button>
-            
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Upload CSV</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="bg-gray-900 border-b border-gray-700 p-4 lg:p-6 xl:p-8 2xl:p-10">
-          <div className="flex items-center justify-between">
+    <>
+      {/* Meta viewport for responsive scaling */}
+      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      {/* Fullscreen JS: triggers on first click/tap */}
+      <script dangerouslySetInnerHTML={{__html: `
+        (function(){
+          let fsTriggered = false;
+          function goFS() {
+            if (!fsTriggered && document.documentElement.requestFullscreen) {
+              document.documentElement.requestFullscreen();
+              fsTriggered = true;
+              window.removeEventListener('click', goFS);
+              window.removeEventListener('touchstart', goFS);
+            }
+          }
+          window.addEventListener('click', goFS);
+          window.addEventListener('touchstart', goFS);
+        })();
+      `}} />
+      <div
+        className="flex flex-col min-h-screen min-w-0 w-screen h-screen bg-black text-white overflow-hidden"
+        style={{ width: '100vw', height: '100vh', margin: 0, padding: 0, boxSizing: 'border-box', overflow: 'hidden' }}
+      >
+        {/* Header */}
+        <header className="bg-red-600 border-b border-red-500 p-2 md:p-4 lg:p-6 xl:p-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full">
             <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium">Data Source:</span>
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  googleSheetsStatus === 'connected' ? 'bg-green-400' : 
-                  googleSheetsStatus === 'error' ? 'bg-red-400' : 'bg-gray-400'
-                }`}></div>
-                <span className="text-sm text-gray-400">
-                  {isUsingGoogleSheets ? `Google Sheets (${googleSheetsData.length} records)` :
-                   isUsingUploadedData ? `Uploaded CSV (${uploadedData.length} records)` : 
-                   'Mock Data Active'}
-                </span>
-              </div>
-              <button 
-                onClick={() => setShowGoogleSheetsModal(true)}
-                className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors"
-              >
-                {googleSheetsStatus === 'connected' ? 'Reconnect' : 'Connect'} Sheets
-              </button>
-              <span className="text-sm text-gray-400">
-                Status: {isUsingUploadedData ? `Uploaded Data (${uploadedData.length} records)` : 'Mock Data Active'}
-              </span>
+              <Package className="w-12 h-12 lg:w-16 lg:h-16 2xl:w-20 2xl:h-20" />
+              <h1 className="text-3xl lg:text-5xl 2xl:text-7xl font-bold">eBay Sales Dashboard</h1>
             </div>
-            
-            {(isUsingUploadedData || isUsingGoogleSheets) && (
-              <button
-                onClick={() => {
-                  setIsUsingGoogleSheets(false);
-                  setIsUsingUploadedData(false);
-                  setUploadedData([]);
-                  setGoogleSheetsData([]);
-                  setGoogleSheetsStatus('disconnected');
-                  localStorage.removeItem('googleSheetsConfig');
-                }}
-                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
-              >
-                Use Mock Data
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Google Sheets Modal */}
-      <GoogleSheetsModal
-        isOpen={showGoogleSheetsModal}
-        onClose={() => setShowGoogleSheetsModal(false)}
-        onConnect={handleGoogleSheetsConnect}
-      />
-
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4 border border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Upload Sales Data</h3>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="p-1 hover:bg-gray-800 rounded transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <p className="text-sm text-gray-400 mb-2">
-                Upload a CSV file with the following columns:
-              </p>
-              <div className="bg-gray-800 rounded p-3 text-xs font-mono text-gray-300">
-                id, accountId, itemId, listingId, amount, quantity, date, accountName
-              </div>
-            </div>
-            
-            <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                dragActive
-                  ? 'border-red-500 bg-red-500/10'
-                  : 'border-gray-600 hover:border-gray-500'
-              }`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-300 mb-2">
-                Drag and drop your CSV file here, or
-              </p>
-              <label className="inline-block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors">
-                Browse Files
+            <div className="flex flex-wrap items-center space-x-2 md:space-x-4 gap-y-2">
+              <div className="flex items-center space-x-2 bg-black/20 rounded-lg p-3">
+                <Calendar className="w-5 h-5" />
                 <input
-                  type="file"
-                  accept=".csv"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleFileUpload(e.target.files[0]);
-                    }
-                  }}
-                  className="hidden"
+                  type="date"
+                  value={selectedDateRange.start}
+                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  className="bg-transparent text-white text-base"
                 />
-              </label>
-            </div>
-            
-            <div className="mt-4 text-xs text-gray-500">
-              <p>• File should be in CSV format</p>
-              <p>• Date format: YYYY-MM-DD</p>
-              <p>• Amount should be numeric values</p>
+                <span>to</span>
+                <input
+                  type="date"
+                  value={selectedDateRange.end}
+                  onChange={(e) => setSelectedDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  className="bg-transparent text-white text-base"
+                />
+              </div>
+              
+              <button
+                onClick={() => setIsRotating(!isRotating)}
+                className={`p-2 rounded-lg transition-colors ${isRotating ? 'bg-white text-red-600' : 'bg-black/20 hover:bg-black/30'}`}
+              >
+                <RefreshCw className={`w-5 h-5 ${isRotating ? 'animate-spin' : ''}`} />
+              </button>
+              
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="p-2 rounded-lg bg-black/20 hover:bg-black/30 transition-colors"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={() => setShowGoogleSheetsModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Connect Sheets</span>
+              </button>
+              
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Upload CSV</span>
+              </button>
             </div>
           </div>
-        </div>
-      )}
-      <div className="flex flex-1 min-h-0 h-screen w-screen max-w-none overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-full max-w-xs md:max-w-sm lg:w-64 xl:w-72 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-4 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto">
-          {/* Account Rotation */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Account Summary</h2>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={handlePrev}
-                  disabled={rotationIndex === 0}
-                  className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
+        </header>
+
+        {/* Settings Panel */}
+        {showSettings && (
+          <div className="bg-gray-900 border-b border-gray-700 p-4 lg:p-6 xl:p-8 2xl:p-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <span className="text-sm font-medium">Data Source:</span>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    googleSheetsStatus === 'connected' ? 'bg-green-400' : 
+                    googleSheetsStatus === 'error' ? 'bg-red-400' : 'bg-gray-400'
+                  }`}></div>
+                  <span className="text-sm text-gray-400">
+                    {isUsingGoogleSheets ? `Google Sheets (${googleSheetsData.length} records)` :
+                     isUsingUploadedData ? `Uploaded CSV (${uploadedData.length} records)` : 
+                     'Mock Data Active'}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setShowGoogleSheetsModal(true)}
+                  className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  {googleSheetsStatus === 'connected' ? 'Reconnect' : 'Connect'} Sheets
                 </button>
                 <span className="text-sm text-gray-400">
-                  {accountIdx + 1} / {accounts.length}
+                  Status: {isUsingUploadedData ? `Uploaded Data (${uploadedData.length} records)` : 'Mock Data Active'}
                 </span>
+              </div>
+              
+              {(isUsingUploadedData || isUsingGoogleSheets) && (
                 <button
-                  onClick={handleNext}
-                  disabled={rotationIndex === totalRotations - 1}
-                  className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
+                  onClick={() => {
+                    setIsUsingGoogleSheets(false);
+                    setIsUsingUploadedData(false);
+                    setUploadedData([]);
+                    setGoogleSheetsData([]);
+                    setGoogleSheetsStatus('disconnected');
+                    localStorage.removeItem('googleSheetsConfig');
+                  }}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition-colors"
                 >
-                  <ChevronRight className="w-2.5 h-2.5" />
+                  Use Mock Data
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Google Sheets Modal */}
+        <GoogleSheetsModal
+          isOpen={showGoogleSheetsModal}
+          onClose={() => setShowGoogleSheetsModal(false)}
+          onConnect={handleGoogleSheetsConnect}
+        />
+
+        {/* Upload Modal */}
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4 border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Upload Sales Data</h3>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="p-1 hover:bg-gray-800 rounded transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
                 </button>
               </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-400 mb-2">
+                  Upload a CSV file with the following columns:
+                </p>
+                <div className="bg-gray-800 rounded p-3 text-xs font-mono text-gray-300">
+                  id, accountId, itemId, listingId, amount, quantity, date, accountName
+                </div>
+              </div>
+              
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  dragActive
+                    ? 'border-red-500 bg-red-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-300 mb-2">
+                  Drag and drop your CSV file here, or
+                </p>
+                <label className="inline-block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors">
+                  Browse Files
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileUpload(e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              
+              <div className="mt-4 text-xs text-gray-500">
+                <p>• File should be in CSV format</p>
+                <p>• Date format: YYYY-MM-DD</p>
+                <p>• Amount should be numeric values</p>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-1 min-h-0 h-screen w-screen max-w-none overflow-hidden">
+          {/* Sidebar */}
+          <div className="w-full max-w-xs md:max-w-sm lg:w-64 xl:w-72 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-4 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto">
+            {/* Account Rotation */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Account Summary</h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handlePrev}
+                    disabled={rotationIndex === 0}
+                    className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm text-gray-400">
+                    {accountIdx + 1} / {accounts.length}
+                  </span>
+                  <button
+                    onClick={handleNext}
+                    disabled={rotationIndex === totalRotations - 1}
+                    className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    <ChevronRight className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              </div>
+
+              {currentAccount && (
+                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                  <h3 className="font-semibold text-white mb-2">{currentAccount.accountName}</h3>
+                  <p className="text-sm text-gray-400 mb-4">ID: {currentAccount.accountId}</p>
+                  {/* --- Sidebar: Last 60 days current and last year totals --- */}
+                  {(() => {
+                    const totals = getSidebar60DayTotals(currentAccount.accountName);
+                    return (
+                      <div className="mb-4 grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Current Year)</p>
+                          <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.currAmount.toFixed(2)}</p>
+                          <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.currQuantity}</p>
+                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.currStartStr} to {totals.currEndStr}</p>
+                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.currStartStr} - {totals.currEndStr}</span></p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Last Year)</p>
+                          <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.lastAmount.toFixed(2)}</p>
+                          <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.lastQuantity}</p>
+                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.lastStartStr} to {totals.lastEndStr}</p>
+                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.lastStartStr} - {totals.lastEndStr}</span></p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* --- End sidebar custom totals --- */}
+                </div>
+              )}
             </div>
 
-            {currentAccount && (
-              <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                <h3 className="font-semibold text-white mb-2">{currentAccount.accountName}</h3>
-                <p className="text-sm text-gray-400 mb-4">ID: {currentAccount.accountId}</p>
-                {/* --- Sidebar: Last 60 days current and last year totals --- */}
+            {/* All Accounts List */}
+            <div>
+              <h3 className="text-md font-semibold mb-3">All Accounts</h3>
+              <div className="space-y-2">
+                {accounts.map((account, index) => (
+                  <button
+                    key={account.accountId}
+                    onClick={() => handleAccountSelect(index)}
+                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                      index === accountIdx
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium">{account.accountName}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full">
+            {/* Account name and mode switcher at the top */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 w-full">
+              <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount.accountName}</h2>
+              <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
+                {['day', 'week', 'month'].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => handleModeSelect(m as 'day' | 'week' | 'month')}
+                    className={`px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-lg font-semibold text-xs sm:text-sm md:text-base lg:text-lg transition-colors ${mode === m ? 'bg-red-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}`}
+                  >
+                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Summary Boxes */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{ minHeight: '170px', height: '20vh' }}>
+              {/* Last Year Period */}
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
                 {(() => {
-                  const totals = getSidebar60DayTotals(currentAccount.accountName);
+                  const totals = getPeriodTotals(selectedAccountName, mode);
+                  const { prevRange } = getPeriodDateRanges(mode);
                   return (
-                    <div className="mb-4 grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Current Year)</p>
-                        <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.currAmount.toFixed(2)}</p>
-                        <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.currQuantity}</p>
-                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.currStartStr} to {totals.currEndStr}</p>
-                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.currStartStr} - {totals.currEndStr}</span></p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Last Year)</p>
-                        <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.lastAmount.toFixed(2)}</p>
-                        <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.lastQuantity}</p>
-                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.lastStartStr} to {totals.lastEndStr}</p>
-                        <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.lastStartStr} - {totals.lastEndStr}</span></p>
-                      </div>
-                    </div>
+                    <>
+                      <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">Last Year</p>
+                      <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white"><span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">£ {totals.lastYearAmount.toFixed(2)}</span></p>
+                      <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mt-2">Qty: <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl">{totals.lastYearQuantity}</span></p>
+                      <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Range: <span className="text-gray-300">{prevRange}</span></p>
+                    </>
                   );
                 })()}
-                {/* --- End sidebar custom totals --- */}
               </div>
-            )}
-          </div>
+              {/* Current Year Period */}
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
+                {(() => {
+                  const totals = getPeriodTotals(selectedAccountName, mode);
+                  const { currRange } = getPeriodDateRanges(mode);
+                  return (
+                    <>
+                      <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">Current Year</p>
+                      <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white">£ {totals.currentAmount.toFixed(2)}</p>
+                      <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mt-2">Qty: <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl">{totals.currentQuantity}</span></p>
+                      <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Range: <span className="text-gray-300">{currRange}</span></p>
+                    </>
+                  );
+                })()}
+              </div>
+              {/* Comparison (YoY) */}
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
+                {(() => {
+                  const totals = getPeriodTotals(selectedAccountName, mode);
+                  const { currRange, prevRange } = getPeriodDateRanges(mode);
+                  return (
+                    <>
+                      <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">YoY Comparison</p>
+                      <div className="flex items-center space-x-2 mb-2">
+                        {totals.amountYoY >= 0 ? (
+                          <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-green-400" />
+                        ) : (
+                          <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-red-400" />
+                        )}
+                        <span className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold ${totals.amountYoY >= 0 ? 'text-green-400' : 'text-red-400'}`}>Amount: {totals.amountYoY >= 0 ? '+' : ''}{totals.amountYoY.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {totals.quantityYoY >= 0 ? (
+                          <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-green-400" />
+                        ) : (
+                          <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-red-400" />
+                        )}
+                        <span className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold ${totals.quantityYoY >= 0 ? 'text-green-400' : 'text-red-400'}`}>Qty: {totals.quantityYoY >= 0 ? '+' : ''}{totals.quantityYoY.toFixed(1)}%</span>
+                      </div>
+                      <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Current Year: <span className="text-gray-300">{currRange}</span></p>
+                      <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400">Last Year: <span className="text-gray-300">{prevRange}</span></p>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
 
-          {/* All Accounts List */}
-          <div>
-            <h3 className="text-md font-semibold mb-3">All Accounts</h3>
-            <div className="space-y-2">
-              {accounts.map((account, index) => (
-                <button
-                  key={account.accountId}
-                  onClick={() => handleAccountSelect(index)}
-                  className={`w-full text-left p-3 rounded-lg transition-colors ${
-                    index === accountIdx
-                      ? 'bg-red-600 text-white'
-                      : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  <span className="font-medium">{account.accountName}</span>
-                </button>
-              ))}
+            {/* Trend Chart */}
+            <div className="flex-1 min-h-0" style={{ minHeight: '300px', minWidth: '100%', height: 'calc(56vh - 6px)', width: '100%' }}>
+              <Line
+                data={{
+                  labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
+                  datasets: [
+                    {
+                      label: 'Amount',
+                      data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.amount),
+                      borderColor: '#ef4444',
+                      backgroundColor: 'rgba(239,68,68,0.2)',
+                      tension: 0.4,
+                    },
+                    {
+                      label: 'Quantity',
+                      data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.quantity),
+                      borderColor: '#22d3ee',
+                      backgroundColor: 'rgba(34,211,238,0.2)',
+                      tension: 0.4,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      labels: { color: '#fff', font: { size: 14 } },
+                    },
+                    title: {
+                      display: true,
+                      text: `${selectedAccountName} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} Trend`,
+                      color: '#fff',
+                      font: { size: 2, weight: 'bold' },
+                    },
+                  },
+                  scales: {
+                    x: {
+                      ticks: { color: '#fff', font: { size: 14 } },
+                      grid: { color: '#374151' },
+                    },
+                    y: {
+                      ticks: { color: '#fff', font: { size: 14 } },
+                      grid: { color: '#374151' },
+                    },
+                  },
+                  maintainAspectRatio: false,
+                }}
+                height={320}
+              />
             </div>
           </div>
         </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full">
-          {/* Account name and mode switcher at the top */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 w-full">
-            <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount.accountName}</h2>
-            <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
-              {['day', 'week', 'month'].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => handleModeSelect(m as 'day' | 'week' | 'month')}
-                  className={`px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-lg font-semibold text-xs sm:text-sm md:text-base lg:text-lg transition-colors ${mode === m ? 'bg-red-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}`}
-                >
-                  {m.charAt(0).toUpperCase() + m.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Summary Boxes */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{ minHeight: '170px', height: '20vh' }}>
-            {/* Last Year Period */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
-              {(() => {
-                const totals = getPeriodTotals(selectedAccountName, mode);
-                const { prevRange } = getPeriodDateRanges(mode);
-                return (
-                  <>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">Last Year</p>
-                    <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white"><span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">£ {totals.lastYearAmount.toFixed(2)}</span></p>
-                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mt-2">Qty: <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl">{totals.lastYearQuantity}</span></p>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Range: <span className="text-gray-300">{prevRange}</span></p>
-                  </>
-                );
-              })()}
-            </div>
-            {/* Current Year Period */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
-              {(() => {
-                const totals = getPeriodTotals(selectedAccountName, mode);
-                const { currRange } = getPeriodDateRanges(mode);
-                return (
-                  <>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">Current Year</p>
-                    <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white">£ {totals.currentAmount.toFixed(2)}</p>
-                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-white mt-2">Qty: <span className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl">{totals.currentQuantity}</span></p>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Range: <span className="text-gray-300">{currRange}</span></p>
-                  </>
-                );
-              })()}
-            </div>
-            {/* Comparison (YoY) */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
-              {(() => {
-                const totals = getPeriodTotals(selectedAccountName, mode);
-                const { currRange, prevRange } = getPeriodDateRanges(mode);
-                return (
-                  <>
-                    <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-2 font-medium">YoY Comparison</p>
-                    <div className="flex items-center space-x-2 mb-2">
-                      {totals.amountYoY >= 0 ? (
-                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-green-400" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-red-400" />
-                      )}
-                      <span className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold ${totals.amountYoY >= 0 ? 'text-green-400' : 'text-red-400'}`}>Amount: {totals.amountYoY >= 0 ? '+' : ''}{totals.amountYoY.toFixed(1)}%</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {totals.quantityYoY >= 0 ? (
-                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-green-400" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 text-red-400" />
-                      )}
-                      <span className={`text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold ${totals.quantityYoY >= 0 ? 'text-green-400' : 'text-red-400'}`}>Qty: {totals.quantityYoY >= 0 ? '+' : ''}{totals.quantityYoY.toFixed(1)}%</span>
-                    </div>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400 mt-2">Current Year: <span className="text-gray-300">{currRange}</span></p>
-                    <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-400">Last Year: <span className="text-gray-300">{prevRange}</span></p>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Trend Chart */}
-          <div className="flex-1 min-h-0" style={{ minHeight: '300px', minWidth: '100%', height: 'calc(56vh - 6px)', width: '100%' }}>
-            <Line
-              data={{
-                labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
-                datasets: [
-                  {
-                    label: 'Amount',
-                    data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.amount),
-                    borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239,68,68,0.2)',
-                    tension: 0.4,
-                  },
-                  {
-                    label: 'Quantity',
-                    data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.quantity),
-                    borderColor: '#22d3ee',
-                    backgroundColor: 'rgba(34,211,238,0.2)',
-                    tension: 0.4,
-                  },
-                ],
-              }}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    labels: { color: '#fff', font: { size: 14 } },
-                  },
-                  title: {
-                    display: true,
-                    text: `${selectedAccountName} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} Trend`,
-                    color: '#fff',
-                    font: { size: 2, weight: 'bold' },
-                  },
-                },
-                scales: {
-                  x: {
-                    ticks: { color: '#fff', font: { size: 14 } },
-                    grid: { color: '#374151' },
-                  },
-                  y: {
-                    ticks: { color: '#fff', font: { size: 14 } },
-                    grid: { color: '#374151' },
-                  },
-                },
-                maintainAspectRatio: false,
-              }}
-              height={320}
-            />
-          </div>
-        </div>
+        {/* Footer */}
+        <footer className="w-full py-4 bg-gray-900 border-t border-gray-700 flex items-center justify-center">
+          <span className="text-gray-200 text-lg md:text-2xl lg:text-3xl font-bold text-center tracking-wide">Digit Web Lanka (PVT) LTD</span>
+        </footer>
       </div>
-      {/* Footer */}
-      <footer className="w-full py-4 bg-gray-900 border-t border-gray-700 flex items-center justify-center">
-        <span className="text-gray-200 text-lg md:text-2xl lg:text-3xl font-bold text-center tracking-wide">Digit Web Lanka (PVT) LTD</span>
-      </footer>
-    </div>
+    </>
   );
 }
 
