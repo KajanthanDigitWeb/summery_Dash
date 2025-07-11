@@ -458,8 +458,8 @@ function App() {
         <header className="bg-red-600 border-b border-red-500 p-2 md:p-4 lg:p-6 xl:p-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full">
             <div className="flex items-center space-x-4">
-              <Package className="w-12 h-12 lg:w-16 lg:h-16 2xl:w-20 2xl:h-20" />
-              <h1 className="text-3xl lg:text-5xl 2xl:text-7xl font-bold">eBay Sales Dashboard</h1>
+              <Package className="w-8 h-8 lg:w-12 lg:h-12 2xl:w-14 2xl:h-14" />
+              <h1 className="text-3xl lg:text-5xl 2xl:text-4xl font-bold">eBay Sales Dashboard</h1>
             </div>
             <div className="flex flex-wrap items-center space-x-2 md:space-x-4 gap-y-2">
               <div className="flex items-center space-x-2 bg-black/20 rounded-lg p-3">
@@ -629,7 +629,7 @@ function App() {
         )}
         <div className="flex flex-1 min-h-0 h-screen w-screen max-w-none overflow-hidden">
           {/* Sidebar */}
-          <div className="w-full max-w-xs md:max-w-sm lg:w-64 xl:w-72 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-4 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto">
+          <div className="w-full max-w-xs md:max-w-sm lg:w-64 xl:w-72 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-4 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto" style={{height: '80vh', minHeight: '80vh'}}>
             {/* Account Rotation */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -711,7 +711,7 @@ function App() {
           <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full">
             {/* Account name and mode switcher at the top */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 w-full">
-              <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount.accountName}</h2>
+              <h5 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount.accountName}</h5>
               <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
                 {['day', 'week', 'month'].map((m) => (
                   <button
@@ -757,7 +757,7 @@ function App() {
                 })()}
               </div>
               {/* Comparison (YoY) */}
-              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[100px]">
                 {(() => {
                   const totals = getPeriodTotals(selectedAccountName, mode);
                   const { currRange, prevRange } = getPeriodDateRanges(mode);
@@ -789,59 +789,58 @@ function App() {
             </div>
 
             {/* Trend Chart */}
-            <div className="flex-1 min-h-0" style={{ minHeight: '300px', minWidth: '100%', height: 'calc(56vh - 6px)', width: '100%' }}>
-              <Line
-                data={{
-                  labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
-                  datasets: [
-                    {
-                      label: 'Amount',
-                      data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.amount),
-                      borderColor: '#ef4444',
-                      backgroundColor: 'rgba(239,68,68,0.2)',
-                      tension: 0.4,
-                    },
-                    {
-                      label: 'Quantity',
-                      data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.quantity),
-                      borderColor: '#22d3ee',
-                      backgroundColor: 'rgba(34,211,238,0.2)',
-                      tension: 0.4,
-                    },
-                  ],
-                }}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: {
-                      labels: { color: '#fff', font: { size: 14 } },
-                    },
-                    title: {
-                      display: true,
-                      text: `${selectedAccountName} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} Trend`,
-                      color: '#fff',
-                      font: { size: 2, weight: 'bold' },
-                    },
-                  },
-                  scales: {
-                    x: {
-                      ticks: { color: '#fff', font: { size: 14 } },
-                      grid: { color: '#374151' },
-                    },
-                    y: {
-                      ticks: { color: '#fff', font: { size: 14 } },
-                      grid: { color: '#374151' },
-                    },
-                  },
-                  maintainAspectRatio: false,
-                }}
-                height={320}
-              />
-            </div>
+            <div className="flex-1 min-h-0" style={{ minHeight: '50px', minWidth: '100%', height: 'calc(10vh)', width: '100%' }}>
+  <Line
+    data={{
+      labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
+      datasets: [
+        {
+          label: 'Amount',
+          data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.amount),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.2)',
+          tension: 0.2,
+        },
+        {
+          label: 'Quantity',
+          data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.quantity),
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34,211,238,0.2)',
+          tension: 0.2,
+        },
+      ],
+    }}
+    options={{
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: '#fff', font: { size: 14 } },
+        },
+        title: {
+          display: true,
+          color: '#fff',
+          font: { size: 2, weight: 'bold' },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: '#fff', font: { size: 10 } },
+          grid: { color: '#374151' },
+        },
+        y: {
+          ticks: { color: '#fff', font: { size: 10 } },
+          grid: { color: '#374151' },
+        },
+      },
+      maintainAspectRatio: false,
+    }}
+    height={80}
+  />
+</div>
           </div>
         </div>
         {/* Footer */}
-        <footer className="w-full py-4 bg-gray-900 border-t border-gray-700 flex items-center justify-center">
+        <footer className="w-full py- bg-gray-900 border-t border-gray-700 flex items-center justify-center">
           <span className="text-gray-200 text-lg md:text-2xl lg:text-3xl font-bold text-center tracking-wide">Digit Web Lanka (PVT) LTD</span>
         </footer>
       </div>
