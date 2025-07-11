@@ -604,7 +604,7 @@ function App() {
                 <p className="text-gray-300 mb-2">
                   Drag and drop your CSV file here, or
                 </p>
-                <label className="inline-block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors">
+                <label className="inline-block px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors">
                   Browse Files
                   <input
                     type="file"
@@ -628,87 +628,94 @@ function App() {
           </div>
         )}
         <div className="flex flex-1 min-h-0 h-screen w-screen max-w-none overflow-hidden">
-          {/* Sidebar */}
-          <div className="w-full max-w-xs md:max-w-sm lg:w-64 xl:w-72 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-4 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto" style={{height: '80vh', minHeight: '80vh'}}>
-            {/* Account Rotation */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Account Summary</h2>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handlePrev}
-                    disabled={rotationIndex === 0}
-                    className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm text-gray-400">
-                    {accountIdx + 1} / {accounts.length}
-                  </span>
-                  <button
-                    onClick={handleNext}
-                    disabled={rotationIndex === totalRotations - 1}
-                    className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
-                  >
-                    <ChevronRight className="w-2.5 h-2.5" />
-                  </button>
-                </div>
-              </div>
-
-              {currentAccount && (
-                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                  <h3 className="font-semibold text-white mb-2">{currentAccount.accountName}</h3>
-                  <p className="text-sm text-gray-400 mb-4">ID: {currentAccount.accountId}</p>
-                  {/* --- Sidebar: Last 60 days current and last year totals --- */}
-                  {(() => {
-                    const totals = getSidebar60DayTotals(currentAccount.accountName);
-                    return (
-                      <div className="mb-4 grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Current Year)</p>
-                          <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.currAmount.toFixed(2)}</p>
-                          <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.currQuantity}</p>
-                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.currStartStr} to {totals.currEndStr}</p>
-                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.currStartStr} - {totals.currEndStr}</span></p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Last Year)</p>
-                          <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.lastAmount.toFixed(2)}</p>
-                          <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.lastQuantity}</p>
-                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.lastStartStr} to {totals.lastEndStr}</p>
-                          <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.lastStartStr} - {totals.lastEndStr}</span></p>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  {/* --- End sidebar custom totals --- */}
-                </div>
-              )}
-            </div>
-
-            {/* All Accounts List */}
+          {/* Sidebar + Footer Column */}
+          <div className="flex flex-col h-[80vh] min-h-[80vh] w-full max-w-xs md:max-w-sm lg:w-64 xl:w-65 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-3 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto justify-between" style={{height: '80vh', minHeight: '80vh'}}>
+            {/* Sidebar */}
             <div>
-              <h3 className="text-md font-semibold mb-3">All Accounts</h3>
-              <div className="space-y-2">
-                {accounts.map((account, index) => (
-                  <button
-                    key={account.accountId}
-                    onClick={() => handleAccountSelect(index)}
-                    className={`w-full text-left p-3 rounded-lg transition-colors ${
-                      index === accountIdx
-                        ? 'bg-red-600 text-white'
-                        : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                    }`}
-                  >
-                    <span className="font-medium">{account.accountName}</span>
-                  </button>
-                ))}
+              {/* Account Rotation */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Account Summary</h2>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handlePrev}
+                      disabled={rotationIndex === 0}
+                      className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm text-gray-400">
+                      {accountIdx + 1} / {accounts.length}
+                    </span>
+                    <button
+                      onClick={handleNext}
+                      disabled={rotationIndex === totalRotations - 1}
+                      className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      <ChevronRight className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {currentAccount && (
+                  <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                    <h3 className="font-semibold text-white mb-2">{currentAccount.accountName}</h3>
+                    <p className="text-sm text-gray-400 mb-4">ID: {currentAccount.accountId}</p>
+                    {/* --- Sidebar: Last 60 days current and last year totals --- */}
+                    {(() => {
+                      const totals = getSidebar60DayTotals(currentAccount.accountName);
+                      return (
+                        <div className="mb-4 grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Current Year)</p>
+                            <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.currAmount.toFixed(2)}</p>
+                            <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.currQuantity}</p>
+                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.currStartStr} to {totals.currEndStr}</p>
+                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.currStartStr} - {totals.currEndStr}</span></p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Last Year)</p>
+                            <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.lastAmount.toFixed(2)}</p>
+                            <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.lastQuantity}</p>
+                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.lastStartStr} to {totals.lastEndStr}</p>
+                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.lastStartStr} - {totals.lastEndStr}</span></p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {/* --- End sidebar custom totals --- */}
+                  </div>
+                )}
+              </div>
+
+              {/* All Accounts List */}
+              <div>
+                <h3 className="text-md font-semibold mb-3">All Accounts</h3>
+                <div className="space-y-2">
+                  {accounts.map((account, index) => (
+                    <button
+                      key={account.accountId}
+                      onClick={() => handleAccountSelect(index)}
+                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                        index === accountIdx
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                      }`}
+                    >
+                      <span className="font-medium">{account.accountName}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+            {/* Sidebar Footer at the bottom */}
+            <footer className="w-full py-4 bg-gray-900 border-t border-gray-700 flex items-center justify-center mt-4">
+              <span className="text-gray-200 text-lg md:text-2xl lg:text-3xl font-bold text-center tracking-wide">Digit Web Lanka (PVT) LTD</span>
+            </footer>
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full">
+          <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full" style={{fontSize: '1.8vw', height: '80vh', minHeight: '80vh'}}>
             {/* Account name and mode switcher at the top */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 w-full">
               <h5 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount.accountName}</h5>
@@ -725,7 +732,7 @@ function App() {
               </div>
             </div>
             {/* Summary Boxes */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{ minHeight: '170px', height: '20vh' }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{ minHeight: '170px', height: '16vh' }}>
               {/* Last Year Period */}
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[180px]">
                 {(() => {
@@ -757,7 +764,7 @@ function App() {
                 })()}
               </div>
               {/* Comparison (YoY) */}
-              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[100px]">
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col items-center h-full min-h-[80px]">
                 {(() => {
                   const totals = getPeriodTotals(selectedAccountName, mode);
                   const { currRange, prevRange } = getPeriodDateRanges(mode);
@@ -789,60 +796,57 @@ function App() {
             </div>
 
             {/* Trend Chart */}
-            <div className="flex-1 min-h-0" style={{ minHeight: '50px', minWidth: '100%', height: 'calc(10vh)', width: '100%' }}>
-  <Line
-    data={{
-      labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
-      datasets: [
-        {
-          label: 'Amount',
-          data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.amount),
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239,68,68,0.2)',
-          tension: 0.2,
-        },
-        {
-          label: 'Quantity',
-          data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.quantity),
-          borderColor: '#22d3ee',
-          backgroundColor: 'rgba(34,211,238,0.2)',
-          tension: 0.2,
-        },
-      ],
-    }}
-    options={{
-      responsive: true,
-      plugins: {
-        legend: {
-          labels: { color: '#fff', font: { size: 14 } },
-        },
-        title: {
-          display: true,
-          color: '#fff',
-          font: { size: 2, weight: 'bold' },
-        },
-      },
-      scales: {
-        x: {
-          ticks: { color: '#fff', font: { size: 10 } },
-          grid: { color: '#374151' },
-        },
-        y: {
-          ticks: { color: '#fff', font: { size: 10 } },
-          grid: { color: '#374151' },
-        },
-      },
-      maintainAspectRatio: false,
-    }}
-    height={80}
-  />
-</div>
+            <div className="flex-1 min-h-0" style={{ minHeight: '80px', minWidth: '100%', height: '40%', width: '100%' }}>
+              <Line
+                data={{
+                  labels: Object.keys((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}),
+                  datasets: [
+                    {
+                      label: 'Amount',
+                      data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.amount),
+                      borderColor: '#ef4444',
+                      backgroundColor: 'rgba(239,68,68,0.2)',
+                      tension: 0.4,
+                    },
+                    {
+                      label: 'Quantity',
+                      data: Object.values((filteredGroupedSalesData as any)[mode][selectedAccountName] || {}).map((d: any) => d.quantity),
+                      borderColor: '#22d3ee',
+                      backgroundColor: 'rgba(34,211,238,0.2)',
+                      tension: 0.4,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      labels: { color: '#fff', font: { size: 14 } },
+                    },
+                    title: {
+                      display: true,
+                      text: `${selectedAccountName} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} Trend`,
+                      color: '#fff',
+                      font: { size: 2, weight: 'bold' },
+                    },
+                  },
+                  scales: {
+                    x: {
+                      ticks: { color: '#fff', font: { size: 14 } },
+                      grid: { color: '#374151' },
+                    },
+                    y: {
+                      ticks: { color: '#fff', font: { size: 14 } },
+                      grid: { color: '#374151' },
+                    },
+                  },
+                  maintainAspectRatio: false,
+                }}
+                height={100}
+              />
+            </div>
           </div>
         </div>
-        {/* Footer */}
-        <footer className="w-full py- bg-gray-900 border-t border-gray-700 flex items-center justify-center">
-          <span className="text-gray-200 text-lg md:text-2xl lg:text-3xl font-bold text-center tracking-wide">Digit Web Lanka (PVT) LTD</span>
-        </footer>
       </div>
     </>
   );
