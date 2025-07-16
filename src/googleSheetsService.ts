@@ -55,28 +55,36 @@ export class GoogleSheetsService {
   }
 
   static parseToSalesData(sheetData: SheetRow[]): any[] {
-    return sheetData.map((row, index) => {
-      const itemId = row.itemId || row.itemid || row.sku || '';
-      // Determine account name by itemId prefix
-      let accountName = 'Other accounts';
-      if (itemId.startsWith('16')) {
-        accountName = 'LEDSone eBay(Renuha)';
-      } else if (itemId.startsWith('26')) {
-        accountName = 'Electricalsone eBay(Jubista)';
-      } else if (itemId.startsWith('31')) {
-        accountName = 'Sunsone eBay(Renuha)';
-      }
-      return {
-        id: row.order_id || `sheet-${index}`,
-        accountId: row.account || '',
-        itemId: itemId,
-        listingId: row.sku || '',
-        amount: parseFloat(row.amount || '0'),
-        quantity: parseInt(row.quantity || '0'),
-        date: row.order_date || '',
-        accountName: accountName
-      };
-    });
+    // Map account field to display name
+    const accountMap: Record<string, string> = {
+      'led_sone': 'LEDSone(Renuha)',
+      'electricalsone': 'Electricalsone(Jubista)',
+      'so_926407': 'Sunsone(Renuha)',
+      'vintageinterior': 'Vintage Interior',
+      'coventrylights': 'Coventry Lights',
+      'dctransformer': 'DC Transformer',
+      'lighting_sone': 'Lighting Sone',
+      'bestbringer': 'Best Bringer',
+      're6865': 'Redro Led',
+    };
+    return sheetData
+      .map((row, index) => {
+        const itemId = row.itemId || row.itemid || row.sku || '';
+        const accountRaw = row.account || '';
+        const accountName = accountMap[accountRaw];
+        if (!accountName) return null; // skip rows not in the 9 mapped accounts
+        return {
+          id: row.order_id || `sheet-${index}`,
+          accountId: accountRaw,
+          itemId: itemId,
+          listingId: row.sku || '',
+          amount: parseFloat(row.amount || '0'),
+          quantity: parseInt(row.quantity || '0'),
+          date: row.order_date || '',
+          accountName: accountName
+        };
+      })
+      .filter(Boolean); // remove nulls (Other accounts)
   }
 
   static groupSalesDataByAccountAndPeriod(salesData: any[], mode: 'day' | 'week' | 'month') {
