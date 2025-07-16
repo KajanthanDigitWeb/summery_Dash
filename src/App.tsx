@@ -206,25 +206,24 @@ function App() {
 
   // Calculate account summaries
   const accountSummaries = (): AccountSummary[] => {
-    // Always use accountName for grouping, fallback to 'Other accounts'
-    const accounts = [...new Set(currentSalesData.map(item => item.accountName || 'Other accounts'))];
-    // Custom sort order: LEDSone, Electricalsone, Sunsone, Other accounts
-    const order = [
-      'LEDSone eBay(Renuha)',
-      'Electricalsone eBay(Jubista)',
-      'Sunsone eBay(Renuha)',
-      'Other accounts'
+    // Only use valid account names, never 'Other accounts'
+    const validAccounts = [
+      'LEDSone(Renuha)',
+      'Electricalsone(Jubista)',
+      'Sunsone(Renuha)',
+      'Vintage Interior',
+      'Coventry Lights',
+      'DC Transformer',
+      'Lighting Sone',
+      'Best Bringer',
+      'Redro Led',
     ];
-    accounts.sort((a, b) => {
-      const aIdx = order.indexOf(a);
-      const bIdx = order.indexOf(b);
-      if (aIdx === -1 && bIdx === -1) return a.localeCompare(b);
-      if (aIdx === -1) return 1;
-      if (bIdx === -1) return -1;
-      return aIdx - bIdx;
-    });
+    // Get unique account names from data, filter out 'Other accounts', and sort by validAccounts order
+    const accounts = [...new Set(currentSalesData.map(item => item.accountName))]
+      .filter(name => validAccounts.includes(name))
+      .sort((a, b) => validAccounts.indexOf(a) - validAccounts.indexOf(b));
     return accounts.map(accountName => {
-      const accountData = currentSalesData.filter(item => (item.accountName || 'Other accounts') === accountName);
+      const accountData = currentSalesData.filter(item => item.accountName === accountName);
       const accountId = accountData[0]?.accountId || '';
       const currentPeriodData = accountData.filter(item => {
         const itemDate = new Date(item.date);
@@ -267,7 +266,7 @@ function App() {
   // Derived indices
   const accountIdx = Math.floor(rotationIndex / 3);
   const modeIdx = rotationIndex % 3;
-  const currentAccount = accounts[accountIdx] || accounts[0];
+  const currentAccount = accounts.length > 0 ? (accounts[accountIdx] || accounts[0]) : null;
   const selectedAccountName = currentAccount?.accountName || 'Unknown Account';
   const mode = ['day', 'week', 'month'][modeIdx];
 
@@ -629,9 +628,9 @@ function App() {
         )}
         <div className="flex flex-1 min-h-0 h-screen w-screen max-w-none overflow-hidden">
           {/* Sidebar + Footer Column */}
-          <div className="flex flex-col h-[80vh] min-h-[80vh] w-full max-w-xs md:max-w-sm lg:w-64 xl:w-65 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-3 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 overflow-y-auto justify-between" style={{height: '80vh', minHeight: '80vh'}}>
+          <div className="flex flex-col h-[80vh] min-h-[80vh] w-full max-w-xs md:max-w-sm lg:w-64 xl:w-65 2xl:w-[18vw] bg-gray-900 border-r border-gray-700 p-3 lg:p-6 xl:p-8 flex-shrink-0 flex flex-col h-full min-h-0 justify-between" style={{height: '80vh', minHeight: '80vh'}}>
             {/* Sidebar */}
-            <div>
+            <div className="flex flex-col h-full min-h-0">
               {/* Account Rotation */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -652,33 +651,33 @@ function App() {
                       disabled={rotationIndex === totalRotations - 1}
                       className="p-1 rounded hover:bg-gray-800 disabled:opacity-50"
                     >
-                      <ChevronRight className="w-2.5 h-2.5" />
+                      <ChevronRight className="w-2 h-2" />
                     </button>
                   </div>
                 </div>
 
                 {currentAccount && (
-                  <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
-                    <h3 className="font-semibold text-white mb-2">{currentAccount.accountName}</h3>
-                    <p className="text-sm text-gray-400 mb-4">ID: {currentAccount.accountId}</p>
+                  <div className="bg-gray-800 rounded-lg p-2 border border-gray-700">
+                    <h3 className="font-semibold text-white mb-1 text-base">{currentAccount.accountName}</h3>
+                    <p className="text-xs text-gray-400 mb-2">ID: {currentAccount.accountId}</p>
                     {/* --- Sidebar: Last 60 days current and last year totals --- */}
                     {(() => {
                       const totals = getSidebar60DayTotals(currentAccount.accountName);
                       return (
-                        <div className="mb-4 grid grid-cols-2 gap-4">
+                        <div className="mb-2 grid grid-cols-2 gap-2">
                           <div>
-                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Current Year)</p>
-                            <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.currAmount.toFixed(2)}</p>
-                            <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.currQuantity}</p>
-                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.currStartStr} to {totals.currEndStr}</p>
-                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.currStartStr} - {totals.currEndStr}</span></p>
+                            <p className="text-[8px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Current Year)</p>
+                            <p className="text-xs sm:text-sm md:text-base font-bold text-white">£{totals.currAmount.toFixed(2)}</p>
+                            <p className="text-[10px] sm:text-xs md:text-sm font-bold text-white mt-1">Qty: {totals.currQuantity}</p>
+                            <p className="text-[8px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.currStartStr} to {totals.currEndStr}</p>
+                            <p className="text-[8px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.currStartStr} - {totals.currEndStr}</span></p>
                           </div>
                           <div>
-                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Last Year)</p>
-                            <p className="text-sm sm:text-base md:text-lg font-bold text-white">£{totals.lastAmount.toFixed(2)}</p>
-                            <p className="text-xs sm:text-sm md:text-base font-bold text-white mt-2">Qty: {totals.lastQuantity}</p>
-                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.lastStartStr} to {totals.lastEndStr}</p>
-                            <p className="text-[9px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.lastStartStr} - {totals.lastEndStr}</span></p>
+                            <p className="text-[8px] sm:text-xs md:text-sm text-gray-400">Last 60 Days<br/>(Last Year)</p>
+                            <p className="text-xs sm:text-sm md:text-base font-bold text-white">£{totals.lastAmount.toFixed(2)}</p>
+                            <p className="text-[10px] sm:text-xs md:text-sm font-bold text-white mt-1">Qty: {totals.lastQuantity}</p>
+                            <p className="text-[8px] sm:text-xs md:text-sm text-gray-500 mt-1">{totals.lastStartStr} to {totals.lastEndStr}</p>
+                            <p className="text-[8px] sm:text-xs md:text-sm text-gray-400 mt-1">Range: <span className="text-gray-300">{totals.lastStartStr} - {totals.lastEndStr}</span></p>
                           </div>
                         </div>
                       );
@@ -688,28 +687,28 @@ function App() {
                 )}
               </div>
 
-              {/* All Accounts List */}
-              <div>
+              {/* All Accounts List - flex-1 and scrollable if needed */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 <h3 className="text-md font-semibold mb-3">All Accounts</h3>
                 <div className="space-y-2">
                   {accounts.map((account, index) => (
                     <button
                       key={account.accountId}
                       onClick={() => handleAccountSelect(index)}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                      className={`w-full p-1.5 rounded-lg transition-colors text-xs leading-tight flex items-center justify-center ${
                         index === accountIdx
                           ? 'bg-red-600 text-white'
                           : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
                       }`}
                     >
-                      <span className="font-medium">{account.accountName}</span>
+                      <span className="font-medium text-xs leading-tight text-center w-full">{account.accountName}</span>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-            {/* Sidebar Footer at the bottom */}
-            <footer className="w-full py-4 bg-gray-900 border-t border-gray-700 flex items-center justify-center mt-4">
+            {/* Sidebar Footer pinned to bottom */}
+            <footer className="w-full py-4 bg-gray-900 border-t border-gray-700 flex items-center justify-center">
               <span className="text-gray-200 text-lg md:text-2xl lg:text-3xl font-bold text-center tracking-wide">Digit Web Lanka (PVT) LTD</span>
             </footer>
           </div>
@@ -718,7 +717,7 @@ function App() {
           <div className="flex-1 flex flex-col min-h-0 h-full p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 overflow-hidden w-full" style={{fontSize: '1.8vw', height: '80vh', minHeight: '80vh'}}>
             {/* Account name and mode switcher at the top */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 w-full">
-              <h5 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount.accountName}</h5>
+              <h5 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white break-words max-w-full leading-tight">{currentAccount ? currentAccount.accountName : 'No Accounts Available'}</h5>
               <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
                 {['day', 'week', 'month'].map((m) => (
                   <button
