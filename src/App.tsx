@@ -150,7 +150,7 @@ function App() {
     const defaultConfig = {
       spreadsheetId: '1331ogfREfU_aunmaQ17GxQ0QrLD7JoENPrU9pxQa4VY',
       range: 'Sheet1!A:Z',
-      apiKey: 'AIzaSyAkkwg845uAn23apY-yB7i0VP-bSM6EyIs'
+      apiKey: 'AIzaSyBB0PrZbVT6dskMeNod0_xyt70Nt0zQKfo'
     };
     
     const savedConfig = localStorage.getItem('googleSheetsConfig');
