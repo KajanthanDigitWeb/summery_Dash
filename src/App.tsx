@@ -133,7 +133,7 @@ function App() {
       const config = {
         spreadsheetId: '1331ogfREfU_aunmaQ17GxQ0QrLD7JoENPrU9pxQa4VY',
         range: 'Sheet2!A:Z',
-        apiKey: 'AIzaSyAkkwg845uAn23apY-yB7i0VP-bSM6EyIs'
+        apiKey: 'AIzaSyBB0PrZbVT6dskMeNod0_xyt70Nt0zQKfo'
       };
       const sheetsService = new GoogleSheetsService(config);
       const rawData = await sheetsService.fetchData();
